@@ -54,52 +54,32 @@ if uploaded_file is not None:
         st.subheader("Original Image")
         st.image(image, use_container_width=True)
 
-    # Detection
+    # Classification
     if st.button("🔍 Detect Defects", type="primary"):
 
         with st.spinner("Analyzing concrete..."):
 
-            results = model.predict(
-                source=image,
-                conf=0.25
-            )
+            results = model.predict(source=image)
 
         result = results[0]
 
-        # Annotated image
-        annotated_image = result.plot()
+        # Get top prediction
+        class_id = result.probs.top1
+        confidence = float(result.probs.top1conf)
+
+        class_name = model.names[class_id]
 
         with col2:
             st.subheader("Detection Result")
-            st.image(
-                annotated_image,
-                channels="BGR",
-                use_container_width=True
-            )
+            st.success(f"🔍 **{class_name}**")
+            st.info(f"Confidence: **{confidence:.2%}**")
 
-        # Detection information
-        if len(result.boxes) > 0:
+        st.subheader("📊 Detected Defect")
 
-            st.success(
-                f"⚠️ {len(result.boxes)} defect(s) detected!"
-            )
-
-            st.subheader("📊 Detected Defects")
-
-            for box in result.boxes:
-
-                class_id = int(box.cls[0])
-                confidence = float(box.conf[0])
-
-                class_name = model.names[class_id]
-
-                st.write(
-                    f"🔴 **{class_name}** — "
-                    f"Confidence: {confidence:.2%}"
-                )
-
-        else:
-            st.success("✅ No concrete defects detected.")
+        st.write(
+            f"🔴 **{class_name}** — "
+            f"Confidence: {confidence:.2%}"
+        )
 
 st.divider()
 
